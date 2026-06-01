@@ -52,7 +52,7 @@ img {
     color: red;
     font-weight: bold;
 }
-    
+
 /* scroll buttons */
 #scrollTopBtn, #scrollBottomBtn {
     position: fixed;
@@ -222,39 +222,32 @@ function renderCustomQuestions(questionsArray, globalStartIndex = 0) {
 
 /* LOGIC */
 
-function checkAnswer(qIndex, selectedValues, correctValues) {
+function showAllAnswers() {
+    const source = getSource();
 
-    const result = document.getElementById('result' + qIndex);
+    source.forEach((q, i) => {
+        const correct = q.variants[0]; // правильный ответ
 
-    // все варианты
-    const inputs = document.querySelectorAll(`input[name="q${qIndex}"]`);
+        const inputs = document.querySelectorAll(`input[name="q${i}"]`);
 
-    inputs.forEach(input => {
-        const label = input.parentElement;
+        inputs.forEach(input => {
+            const label = input.parentElement;
 
-        // сброс цветов
-        label.classList.remove('correct-answer', 'wrong-answer');
+            // очистка старых классов
+            label.classList.remove('correct-answer');
 
-        if (correctValues.includes(input.value)) {
-            label.classList.add('correct-answer');
-        }
+            // если это правильный ответ → зелёный
+            if (input.value === correct) {
+                label.classList.add('correct-answer');
+            }
+        });
 
-        if (input.checked && !correctValues.includes(input.value)) {
-            label.classList.add('wrong-answer');
+        const result = document.getElementById('result' + i);
+        if (result) {
+            result.innerHTML = `Дұрыс жауап: <b>${correct}</b>`;
+            result.className = 'correct';
         }
     });
-
-    const isCorrect =
-        selectedValues.length === correctValues.length &&
-        selectedValues.every(v => correctValues.includes(v));
-
-    if (isCorrect) {
-        result.textContent = 'Дұрыс ✅';
-        result.className = 'correct';
-    } else {
-        result.innerHTML = `Қате ❌<br>Дұрыс жауап: <b>${correctValues[0]}</b>`;
-        result.className = 'incorrect';
-    }
 }
     
 /* SHOW ANSWERS */

@@ -43,6 +43,16 @@ img {
     border-radius: 8px;
 }
 
+.correct-answer {
+    color: green;
+    font-weight: bold;
+}
+
+.wrong-answer {
+    color: red;
+    font-weight: bold;
+}
+    
 /* scroll buttons */
 #scrollTopBtn, #scrollBottomBtn {
     position: fixed;
@@ -213,7 +223,26 @@ function renderCustomQuestions(questionsArray, globalStartIndex = 0) {
 /* LOGIC */
 
 function checkAnswer(qIndex, selectedValues, correctValues) {
+
     const result = document.getElementById('result' + qIndex);
+
+    // все варианты
+    const inputs = document.querySelectorAll(`input[name="q${qIndex}"]`);
+
+    inputs.forEach(input => {
+        const label = input.parentElement;
+
+        // сброс цветов
+        label.classList.remove('correct-answer', 'wrong-answer');
+
+        if (correctValues.includes(input.value)) {
+            label.classList.add('correct-answer');
+        }
+
+        if (input.checked && !correctValues.includes(input.value)) {
+            label.classList.add('wrong-answer');
+        }
+    });
 
     const isCorrect =
         selectedValues.length === correctValues.length &&
@@ -227,7 +256,7 @@ function checkAnswer(qIndex, selectedValues, correctValues) {
         result.className = 'incorrect';
     }
 }
-
+    
 /* SHOW ANSWERS */
 
 function showAllAnswers() {

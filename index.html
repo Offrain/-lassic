@@ -564,6 +564,12 @@ function resetAll() {
     renderPagination();
 }
 
+window.shuffleQuestions = shuffleQuestions;
+window.shuffleCurrentPage = shuffleCurrentPage;
+window.resetAll = resetAll;
+window.showAllAnswers = showAllAnswers;
+window.applyCustomSelection = applyCustomSelection;
+        
 /* SCROLL */
 
 document.getElementById("scrollTopBtn").onclick = () => {
@@ -576,6 +582,7 @@ document.getElementById("scrollBottomBtn").onclick = () => {
 
 loadTest();
 
+    
 </script>
 
 </body>

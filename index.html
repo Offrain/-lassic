@@ -570,8 +570,8 @@ function resetAll() {
 
 /* ZOOM */
 function zoomIn() {
-    zoomLevel += 0.1;
-    zoomLevel = Math.min(2, zoomLevel);
+    zoomLevel += 0.25;
+    if (zoomLevel > 2.5) zoomLevel = 1;
     document.body.style.zoom = zoomLevel;
 }
     

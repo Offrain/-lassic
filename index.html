@@ -569,19 +569,21 @@ function resetAll() {
 }
 
 /* ZOOM */
-function applyZoom() {
-    document.getElementById("quiz").style.transform = `scale(${zoomLevel})`;
-}
+window.addEventListener("wheel", function (e) {
+    if (e.ctrlKey) {
+        e.preventDefault();
 
-function zoomIn() {
-    zoomLevel += 0.5; // +50%
+        if (e.deltaY < 0) {
+            zoomLevel += 0.1;
+        } else {
+            zoomLevel -= 0.1;
+        }
 
-    if (zoomLevel > 2) {
-        zoomLevel = 1; // сброс после 200%
+        zoomLevel = Math.min(2, Math.max(0.5, zoomLevel));
+
+        document.body.style.zoom = zoomLevel;
     }
-
-    applyZoom();
-}
+}, { passive: false });
 
 window.zoomIn = zoomIn;
 

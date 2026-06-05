@@ -92,6 +92,8 @@ img {
 
 <h1>Тест</h1>
 
+<button onclick="zoomIn()">🔍 Увеличить</button>
+
 <button onclick="shuffleQuestions()">Араластыр (барлығы)</button> <button onclick="shuffleCurrentPage()">Араластыр (бет)</button> <button onclick="resetAll()">Қайта бастау</button> <button onclick="showAllAnswers()">Жауап көрсету</button>
 
 <br><br>
@@ -115,6 +117,7 @@ img {
 <div id="pagination"></div>
 
 <button id="scrollTopBtn">⬆️</button> <button id="scrollBottomBtn">⬇️</button>
+
 
 <script type="module">
     
@@ -293,6 +296,7 @@ function setMsg(t) {
 }
 
 /* ================= TEST ================= */
+let zoomLevel = 1; // 1 = 100%
 let currentPage = 1;
 const questionsPerPage = 50;
 
@@ -563,6 +567,23 @@ function resetAll() {
     renderPage(currentPage);
     renderPagination();
 }
+
+/* ZOOM */
+function applyZoom() {
+    document.getElementById("quiz").style.transform = `scale(${zoomLevel})`;
+}
+
+function zoomIn() {
+    zoomLevel += 0.5; // +50%
+
+    if (zoomLevel > 2) {
+        zoomLevel = 1; // сброс после 200%
+    }
+
+    applyZoom();
+}
+
+window.zoomIn = zoomIn;
 
 window.shuffleQuestions = shuffleQuestions;
 window.shuffleCurrentPage = shuffleCurrentPage;

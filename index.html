@@ -7,6 +7,18 @@
 <title>Тест жүйесі</title>
 
 <style>
+    
+<div id="auth">
+  <h2>Кіру</h2>
+
+  <input id="email" placeholder="email"><br><br>
+  <input id="pass" type="password" placeholder="password"><br><br>
+
+  <button onclick="login()">Кіру</button>
+
+  <p id="msg"></p>
+</div>
+    
 body {
     font-family: Arial;
     margin: 20px;
@@ -103,7 +115,182 @@ img {
 <button id="scrollTopBtn">⬆️</button> <button id="scrollBottomBtn">⬇️</button>
 
 <script>
+    
+/* ================= FIREBASE ================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ================= CONFIG ================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyCAL20P_NiAsJ54BHTW81FZba0FYNOc6SU",
+  authDomain: "prst-99760.firebaseapp.com",
+  projectId: "prst-99760",
+  storageBucket: "prst-99760.firebasestorage.app",
+  messagingSenderId: "72274793382",
+  appId: "1:72274793382:web:8f0e20d0290e497985f567"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* ================= DEVICE ================= */
+function getDeviceId() {
+  let id = localStorage.getItem("deviceId");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("deviceId", id);
+  }
+  return id;
+}
+
+/* ================= UI FIX ================= */
+function showApp() {
+  document.getElementById("auth").style.display = "none";
+  document.getElementById("app").style.display = "block";
+}
+
+function hideApp() {
+  document.getElementById("auth").style.display = "block";
+  document.getElementById("app").style.display = "none";
+}
+    
+/* ================= ANTI-CHEAT ================= */
+document.addEventListener("copy", (e) => {
+  e.preventDefault();
+});
+
+document.addEventListener("selectstart", (e) => {
+  e.preventDefault();
+});
+
+ document.addEventListener("keydown", (e) => {
+  if (
+    (e.ctrlKey && e.key === "c") ||
+    (e.ctrlKey && e.key === "a") ||
+    (e.ctrlKey && e.key === "u")
+  ) {
+    e.preventDefault();
+  }
+});
+
+/* ================= REGISTER ================= */
+window.register = async function () {
+  const email = emailEl().value;
+  const pass = passEl().value;
+
+  try {
+    await createUserWithEmailAndPassword(auth, email, pass);
+
+    await setDoc(doc(db, "users", email), {
+      email,
+      deviceId: getDeviceId(),
+      blocked: false
+    });
+
+    setMsg("OK тіркелді");
+  } catch (e) {
+    setMsg(e.message);
+  }
+};
+
+/* ================= LOGIN ================= */
+window.login = async function () {
+  const email = emailEl().value;
+  const pass = passEl().value;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+
+    const ref = doc(db, "users", email);
+    const snap = await getDoc(ref);
+
+    const deviceId = getDeviceId();
+
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        email,
+        deviceId,
+        blocked: false
+      });
+    } else {
+      const data = snap.data();
+
+      if (data.deviceId && data.deviceId !== deviceId) {
+        await signOut(auth);
+        setMsg("❌ Доступ запрещён (другое устройство)");
+        return;
+      }
+
+      await updateDoc(ref, {
+        deviceId,
+        blocked: false
+      });
+    }
+
+    setMsg("OK кірді");
+
+  } catch (e) {
+    setMsg(e.message);
+  }
+};
+
+/* ================= AUTH STATE ================= */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    hideApp();
+    return;
+  }
+
+  const ref = doc(db, "users", user.email);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    await signOut(auth);
+    hideApp();
+    return;
+  }
+
+  const data = snap.data();
+
+  if (data.deviceId !== getDeviceId()) {
+    await signOut(auth);
+    alert("Сессия закрыта (другое устройство)");
+    hideApp();
+    return;
+  }
+
+  showApp();
+  loadTest(); // 🔥 ВАЖНО: теперь тест всегда грузится
+});
+
+/* ================= HELPERS ================= */
+function emailEl() {
+  return document.getElementById("email");
+}
+function passEl() {
+  return document.getElementById("pass");
+}
+function setMsg(t) {
+  document.getElementById("msg").innerText = t;
+}
+
+/* ================= TEST ================= */
 let currentPage = 1;
 const questionsPerPage = 50;
 

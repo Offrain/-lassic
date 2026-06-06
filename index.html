@@ -66,7 +66,23 @@ img {
     cursor: pointer;
     opacity: 0.7;
 }
-
+    
+#watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-25deg);
+    
+    font-size: 80px;
+    color: rgba(0, 0, 0, 0.06); /* очень слабая прозрачность */
+    
+    pointer-events: none; /* не мешает кликам */
+    user-select: none;
+    
+    z-index: 0; /* под контентом */
+    white-space: nowrap;
+}
+    
 #scrollTopBtn { bottom: 80px; }
 #scrollBottomBtn { bottom: 20px; }
 
@@ -86,7 +102,10 @@ img {
 
   <p id="msg"></p>
 </div>
-
+    
+<div id="watermark">
+</div>  
+    
 <!-- 🔥 APP (ТВОЙ ТЕСТ) -->
 <div id="app" style="display:none;">
 
@@ -283,8 +302,9 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
-  showApp();
-  loadTest(); // 🔥 ВАЖНО: теперь тест всегда грузится
+showApp();
+setWatermark(user.email);
+loadTest(); // 🔥 ВАЖНО: теперь тест всегда грузится
 });
 
 /* ================= HELPERS ================= */
@@ -339,7 +359,14 @@ async function loadTest() {
   }
 }
     
-
+/* Watermark*/ 
+function setWatermark(email) {
+    const name = email.split("@")[0];
+    const wm = document.getElementById("watermark");
+    wm.textContent = name;
+}
+    
+/* LOAD */
 function parseQuestions(text) {
     const blocks = text.split(/<question>/)
         .map(b => b.trim())

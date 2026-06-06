@@ -24,16 +24,15 @@
 <hr>
 
 <h3>📥 JSON импорт</h3>
-<textarea id="json" rows="10" cols="50"></textarea><br>
+<textarea id="json" rows="10" cols="50" placeholder='[{"question":"2+2?","variants":["3","4"],"correct":"4"}]'></textarea><br>
+
 <button onclick="importJSON()">Импортировать</button>
 
 <p id="msg"></p>
 
 <script type="module">
 
-/* ================= FIREBASE IMPORTS ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-
 import {
   getFirestore,
   collection,
@@ -87,46 +86,79 @@ onAuthStateChanged(auth, async (user) => {
 /* ================= ADD QUESTION ================= */
 window.addQuestion = async function () {
 
-  const q = document.getElementById("question").value;
+  try {
 
-  const variants = [
-    document.getElementById("v1").value,
-    document.getElementById("v2").value,
-    document.getElementById("v3").value,
-    document.getElementById("v4").value,
-    document.getElementById("v5").value
-  ].filter(v => v); // убираем пустые
+    const q = document.getElementById("question").value;
 
-  const correct = document.getElementById("correct").value;
+    const variants = [
+      document.getElementById("v1").value,
+      document.getElementById("v2").value,
+      document.getElementById("v3").value,
+      document.getElementById("v4").value,
+      document.getElementById("v5").value
+    ].filter(v => v);
 
-  if (!q || !correct || variants.length < 2) {
-    setMsg("❌ Заполни вопрос и минимум 2 варианта");
-    return;
+    const correct = document.getElementById("correct").value;
+
+    if (!q || !correct || variants.length < 2) {
+      setMsg("❌ Заполни вопрос и минимум 2 варианта");
+      return;
+    }
+
+    if (!variants.includes(correct)) {
+      setMsg("❌ Правильный ответ должен быть в вариантах");
+      return;
+    }
+
+    await addDoc(collection(db, "tests"), {
+      question: q,
+      variants,
+      correct
+    });
+
+    setMsg("✅ Добавлено!");
+
+  } catch (e) {
+    console.error(e);
+    setMsg("❌ Ошибка: " + e.message);
   }
-
-  if (!variants.includes(correct)) {
-    setMsg("❌ Правильный ответ должен быть в вариантах");
-    return;
-  }
-
-  await addDoc(collection(db, "tests"), {
-    question: q,
-    variants: variants,
-    correct: correct
-  });
-
-  setMsg("✅ Добавлено!");
 };
 
-/* ================= IMPORT JSON ================= */
+/* ================= IMPORT JSON (FIXED) ================= */
 window.importJSON = async function () {
 
   try {
-    const data = JSON.parse(document.getElementById("json").value);
+
+    const raw = document.getElementById("json").value.trim();
+
+    if (!raw) {
+      setMsg("❌ JSON пустой");
+      return;
+    }
+
+    console.log("RAW JSON:", raw);
+
+    let data;
+
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      console.error("JSON PARSE ERROR:", e);
+      setMsg("❌ JSON ошибка: " + e.message);
+      return;
+    }
+
+    if (!Array.isArray(data)) {
+      setMsg("❌ JSON должен быть массивом []");
+      return;
+    }
 
     for (let q of data) {
 
-      if (!q.question || !q.variants || !q.correct) continue;
+      if (!q.question || !q.variants || !q.correct) {
+        console.log("SKIP INVALID:", q);
+        continue;
+      }
 
       await addDoc(collection(db, "tests"), {
         question: q.question,
@@ -136,8 +168,10 @@ window.importJSON = async function () {
     }
 
     setMsg("📦 Импорт завершён!");
+
   } catch (e) {
-    setMsg("❌ Ошибка JSON");
+    console.error(e);
+    setMsg("❌ Ошибка: " + e.message);
   }
 };
 

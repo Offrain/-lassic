@@ -45,7 +45,17 @@ const db = getFirestore(app);
 function setMsg(t) {
   document.getElementById("msg").innerText = t;
 }
+  
+onAuthStateChanged(auth, async (user) => {
+  const ref = doc(db, "users", user.email);
+  const snap = await getDoc(ref);
 
+  if (snap.data().role !== "admin") {
+    alert("Нет доступа");
+    window.location.href = "/";
+  }
+});
+  
 // ➕ добавить 1 вопрос
 window.addQuestion = async function () {
 

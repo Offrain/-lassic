@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+</head>
+
+<body>
+
+<h2>📦 Admin Panel - Тест загрузка</h2>
+
+<input id="question" placeholder="Сұрақ"><br><br>
+
+<input id="v1" placeholder="Вариант 1"><br>
+<input id="v2" placeholder="Вариант 2"><br>
+<input id="v3" placeholder="Вариант 3"><br>
+<input id="v4" placeholder="Вариант 4"><br><br>
+
+<input id="correct" placeholder="Правильный ответ"><br><br>
+
+<button onclick="addQuestion()">➕ Добавить</button>
+
+<hr>
+
+<h3>📥 JSON импорт</h3>
+<textarea id="json" rows="10" cols="50"></textarea><br>
+<button onclick="importJSON()">Импортировать</button>
+
+<p id="msg"></p>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCAL20P_NiAsJ54BHTW81FZba0FYNOc6SU",
+  authDomain: "prst-99760.firebaseapp.com",
+  projectId: "prst-99760"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+function setMsg(t) {
+  document.getElementById("msg").innerText = t;
+}
+
+// ➕ добавить 1 вопрос
+window.addQuestion = async function () {
+
+  const q = document.getElementById("question").value;
+
+  const variants = [
+    document.getElementById("v1").value,
+    document.getElementById("v2").value,
+    document.getElementById("v3").value,
+    document.getElementById("v4").value
+  ];
+
+  const correct = document.getElementById("correct").value;
+
+  await addDoc(collection(db, "tests"), {
+    question: q,
+    variants: variants,
+    correct: correct
+  });
+
+  setMsg("✅ Добавлено!");
+};
+
+// 📥 импорт JSON
+window.importJSON = async function () {
+
+  try {
+    const data = JSON.parse(document.getElementById("json").value);
+
+    for (let q of data) {
+      await addDoc(collection(db, "tests"), q);
+    }
+
+    setMsg("📦 Импорт завершён!");
+  } catch (e) {
+    setMsg("❌ Ошибка JSON");
+  }
+};
+
+</script>
+
+</body>
+</html>

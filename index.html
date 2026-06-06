@@ -305,15 +305,30 @@ let activeQuestions = [];
 
 /* LOAD */
 
-async function loadTest() {
-    const response = await fetch('test.txt');
-    const text = await response.text();
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    allQuestions = parseQuestions(text);
+const db = getFirestore(app);
+
+async function loadTest() {
+    const querySnapshot = await getDocs(collection(db, "tests"));
+
+    allQuestions = [];
+
+    querySnapshot.forEach((doc) => {
+        const d = doc.data();
+
+        allQuestions.push({
+    question: d.question,
+    variants: d.variants,
+    correct: d.correct,
+    image: d.image || null
+        });
+    });
 
     renderPage(currentPage);
     renderPagination();
 }
+    
 
 function parseQuestions(text) {
     const blocks = text.split(/<question>/)
@@ -359,7 +374,7 @@ function renderCustomQuestions(questionsArray, globalStartIndex = 0) {
 
     questionsArray.forEach((q, index) => {
 
-        const correctValues = [q.variants[0]];
+        const correctValues = [q.correct];
         const shuffled = shuffle([...q.variants]);
 
         const qIndex = globalStartIndex + index;

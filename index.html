@@ -399,20 +399,10 @@ function renderPage(page) {
 }
 
 function renderCustomQuestions(questionsArray, globalStartIndex = 0) {
-    const wm = document.createElement('div');
-        wm.className = 'q-watermark';
-        wm.textContent = getWatermarkText();
-        div.appendChild(wm);
-    
     const quiz = document.getElementById('quiz');
     quiz.innerHTML = '';
 
     questionsArray.forEach((q, index) => {
-        const wm = document.createElement('div');
-        wm.className = 'q-watermark';
-        wm.textContent = getWatermarkText();
-        div.appendChild(wm);
-        
         const correctValues = [q.correct];
         const shuffled = shuffle([...q.variants]);
 
@@ -420,7 +410,12 @@ function renderCustomQuestions(questionsArray, globalStartIndex = 0) {
 
         const div = document.createElement('div');
         div.className = 'question';
-
+        
+        const wm = document.createElement('div');
+        wm.className = 'q-watermark';
+        wm.textContent = getWatermarkText();
+        div.appendChild(wm);
+    
         const p = document.createElement('p');
         p.textContent = (qIndex + 1) + '. ' + q.question;
 

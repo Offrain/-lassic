@@ -75,7 +75,36 @@ img {
     pointer-events: none;
     letter-spacing: 1px;
 }
+
+#watermark-center {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-25deg);
+
+    font-size: 80px;
+    color: rgba(0, 0, 0, 0.10);
+
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+    white-space: nowrap;
+}
     
+#watermark-corner {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+
+    font-size: 16px;
+    color: rgba(0, 0, 0, 0.08);
+
+    pointer-events: none;
+    user-select: none;
+
+    z-index: 0;
+    white-space: nowrap;
+}    
 @media (max-width: 768px) {
     #watermark-center {
         font-size: 40px;

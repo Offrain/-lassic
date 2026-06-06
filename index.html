@@ -76,6 +76,26 @@ img {
     letter-spacing: 1px;
 }
     
+@media (max-width: 768px) {
+    #watermark-center {
+        font-size: 40px;
+        color: rgba(0, 0, 0, 0.14);
+        transform: translate(-50%, -50%) rotate(-20deg);
+    }
+
+    #watermark-corner {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 400px) {
+    #watermark-center {
+        font-size: 28px;
+        color: rgba(0, 0, 0, 0.16);
+        transform: translate(-50%, -50%) rotate(-15deg);
+    }
+}
+    
 #scrollTopBtn { bottom: 80px; }
 #scrollBottomBtn { bottom: 20px; }
 
@@ -84,7 +104,8 @@ img {
 </head>
 
 <body>
-    
+<div id="watermark-center"></div>
+<div id="watermark-corner"></div>
 <div id="auth">
   <h2>Кіру</h2>
 
@@ -359,7 +380,16 @@ function getWatermarkText() {
 
     return user.email.split("@")[0];
 }
-    
+
+function setWatermark(email) {
+    const name = email.split("@")[0];
+
+    const center = document.getElementById("watermark-center");
+    const corner = document.getElementById("watermark-corner");
+
+    if (center) center.textContent = name;
+    if (corner) corner.textContent = name;
+}    
 /* LOAD */
 function parseQuestions(text) {
     const blocks = text.split(/<question>/)

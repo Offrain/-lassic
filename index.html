@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="kk">
 <head>
 <meta charset="UTF-8">
@@ -6,117 +7,167 @@
 <title>Тест жүйесі</title>
 
 <style>
-body { font-family: Arial; margin: 20px; }
-
-.question {
-  margin-bottom: 25px;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+body {
+    font-family: Arial;
+    margin: 20px;
 }
 
-.variant { display: block; margin: 5px 0; cursor: pointer; }
+.question {
+    margin-bottom: 25px;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.variant {
+    display: block;
+    margin: 5px 0;
+    cursor: pointer;
+}
 
 .correct { color: green; }
 .incorrect { color: red; }
 
-.pagination button { margin: 5px; }
-
-.active { background: blue; color: white; }
-
-img {
-  max-width: 400px;
-  display: block;
-  margin: 10px 0;
-  border-radius: 8px;
+.pagination button {
+    margin: 5px;
 }
 
-.correct-answer { color: green; font-weight: bold; }
-.wrong-answer { color: red; font-weight: bold; }
+.active {
+    background: blue;
+    color: white;
+}
 
+img {
+    max-width: 400px;
+    display: block;
+    margin: 10px 0;
+    border-radius: 8px;
+}
+
+.correct-answer {
+    color: green;
+    font-weight: bold;
+}
+
+.wrong-answer {
+    color: red;
+    font-weight: bold;
+}
+
+/* scroll buttons */
 #scrollTopBtn, #scrollBottomBtn {
-  position: fixed;
-  right: 15px;
-  padding: 10px 15px;
-  font-size: 18px;
-  border: none;
-  border-radius: 8px;
-  background: #333;
-  color: white;
-  cursor: pointer;
-  opacity: 0.7;
+    position: fixed;
+    right: 15px;
+    padding: 10px 15px;
+    font-size: 18px;
+    border: none;
+    border-radius: 8px;
+    background: #333;
+    color: white;
+    cursor: pointer;
+    opacity: 0.7;
 }
 
 #scrollTopBtn { bottom: 80px; }
 #scrollBottomBtn { bottom: 20px; }
+
 </style>
 
 </head>
 
 <body>
-
+    
 <div id="auth">
   <h2>Кіру</h2>
+
   <input id="email" placeholder="email"><br><br>
   <input id="pass" type="password" placeholder="password"><br><br>
+
   <button onclick="login()">Кіру</button>
+
   <p id="msg"></p>
 </div>
 
+<!-- 🔥 APP (ТВОЙ ТЕСТ) -->
 <div id="app" style="display:none;">
 
 <h1>Тест</h1>
 
-<button onclick="zoomIn()">🔍</button>
-<button onclick="shuffleQuestions()">Араластыр</button>
-<button onclick="resetAll()">Қайта бастау</button>
-<button onclick="showAllAnswers()">Жауап көрсету</button>
+<button onclick="zoomIn()">  🔍  </button>
+
+<button onclick="shuffleQuestions()">Араластыр (барлығы)</button> <button onclick="shuffleCurrentPage()">Араластыр (бет)</button> <button onclick="resetAll()">Қайта бастау</button> <button onclick="showAllAnswers()">Жауап көрсету</button>
 
 <br><br>
+
+<div>
+    <label>Сұрақ саны:</label>
+    <input type="number" id="questionCount" value="50" style="width:60px;">
+    
+<br><br>  
+    
+<label>Диапазон:</label>
+<input type="number" id="rangeStart" value="0" style="width:60px;">
+- 
+<input type="number" id="rangeEnd" value="300" style="width:60px;">
+
+<button onclick="applyCustomSelection()">Қолдану</button>
+
+</div>
 
 <div id="quiz"></div>
 <div id="pagination"></div>
 
-<button id="scrollTopBtn">⬆️</button>
-<button id="scrollBottomBtn">⬇️</button>
+<button id="scrollTopBtn">⬆️</button> <button id="scrollBottomBtn">⬇️</button>
 
-</div>
 
 <script type="module">
-
+    
 /* ================= FIREBASE ================= */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+  import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import {
   getAuth,
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  collection,
-  getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
 /* ================= CONFIG ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyCAL20P_NiAsJ54BHTW81FZba0FYNOc6SU",
   authDomain: "prst-99760.firebaseapp.com",
-  projectId: "prst-99760"
+  projectId: "prst-99760",
+  storageBucket: "prst-99760.firebasestorage.app",
+  messagingSenderId: "72274793382",
+  appId: "1:72274793382:web:8f0e20d0290e497985f567"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* ================= UI ================= */
-function setMsg(t) {
-  document.getElementById("msg").innerText = t;
+/* ================= DEVICE ================= */
+function getDeviceId() {
+  let id = localStorage.getItem("deviceId");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("deviceId", id);
+  }
+  return id;
 }
 
+/* ================= UI FIX ================= */
 function showApp() {
   document.getElementById("auth").style.display = "none";
   document.getElementById("app").style.display = "block";
@@ -126,141 +177,465 @@ function hideApp() {
   document.getElementById("auth").style.display = "block";
   document.getElementById("app").style.display = "none";
 }
+    
+/* ================= ANTI-CHEAT ================= */
+document.addEventListener("copy", (e) => {
+  e.preventDefault();
+});
 
-/* ================= LOGIN ================= */
-window.login = async function () {
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("pass").value;
+document.addEventListener("selectstart", (e) => {
+  e.preventDefault();
+});
+
+ document.addEventListener("keydown", (e) => {
+  if (
+    (e.ctrlKey && e.key === "c") ||
+    (e.ctrlKey && e.key === "a") ||
+    (e.ctrlKey && e.key === "u")
+  ) {
+    e.preventDefault();
+  }
+});
+
+/* ================= REGISTER ================= */
+window.register = async function () {
+  const email = emailEl().value;
+  const pass = passEl().value;
 
   try {
-    await signInWithEmailAndPassword(auth, email, pass);
-    setMsg("OK кірді");
+    await createUserWithEmailAndPassword(auth, email, pass);
+
+    await setDoc(doc(db, "users", email), {
+      email,
+      deviceId: getDeviceId(),
+      blocked: false
+    });
+
+    setMsg("OK тіркелді");
   } catch (e) {
     setMsg(e.message);
   }
 };
 
-/* ================= AUTH ================= */
+/* ================= LOGIN ================= */
+window.login = async function () {
+  const email = emailEl().value;
+  const pass = passEl().value;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+
+    const ref = doc(db, "users", email);
+    const snap = await getDoc(ref);
+
+    const deviceId = getDeviceId();
+
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        email,
+        deviceId,
+        blocked: false
+      });
+    } else {
+      const data = snap.data();
+
+      if (data.deviceId && data.deviceId !== deviceId) {
+        await signOut(auth);
+        setMsg("❌ Доступ запрещён (другое устройство)");
+        return;
+      }
+
+      await updateDoc(ref, {
+        deviceId,
+        blocked: false
+      });
+    }
+
+    setMsg("OK кірді");
+
+  } catch (e) {
+    setMsg(e.message);
+  }
+};
+
+/* ================= AUTH STATE ================= */
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     hideApp();
     return;
   }
 
+  const ref = doc(db, "users", user.email);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    await signOut(auth);
+    hideApp();
+    return;
+  }
+
+  const data = snap.data();
+
+  if (data.deviceId !== getDeviceId()) {
+    await signOut(auth);
+    alert("Сессия закрыта (другое устройство)");
+    hideApp();
+    return;
+  }
+
   showApp();
-  loadTest();
+  loadTest(); // 🔥 ВАЖНО: теперь тест всегда грузится
 });
 
-/* ================= DATA ================= */
-let allQuestions = [];
+/* ================= HELPERS ================= */
+function emailEl() {
+  return document.getElementById("email");
+}
+function passEl() {
+  return document.getElementById("pass");
+}
+function setMsg(t) {
+  document.getElementById("msg").innerText = t;
+}
+
+/* ================= TEST ================= */
+let zoomLevel = 1; // 1 = 100%
 let currentPage = 1;
-const perPage = 50;
+const questionsPerPage = 50;
 
-/* ================= LOAD TEST (FIXED) ================= */
+let allQuestions = [];
+let activeQuestions = [];
+
+/* LOAD */
+
 async function loadTest() {
-
   try {
     console.log("Loading tests...");
 
     const querySnapshot = await getDocs(collection(db, "tests"));
 
-    console.log("Docs:", querySnapshot.size);
+    console.log("Docs found:", querySnapshot.size);
 
     allQuestions = [];
 
     querySnapshot.forEach((docSnap) => {
       const d = docSnap.data();
 
+      console.log("Question:", d);
+
       allQuestions.push({
         question: d.question,
         variants: d.variants,
-        correct: d.correct
+        correct: d.correct,
+        image: d.image || null
       });
     });
 
-    render();
+    renderPage(currentPage);
+    renderPagination();
 
   } catch (e) {
     console.error("LOAD ERROR:", e);
   }
 }
+    
 
-/* ================= RENDER ================= */
-function render() {
+function parseQuestions(text) {
+    const blocks = text.split(/<question>/)
+        .map(b => b.trim())
+        .filter(b => b.length > 0);
 
-  const quiz = document.getElementById("quiz");
-  quiz.innerHTML = "";
+    return blocks.map(block => {
 
-  const start = (currentPage - 1) * perPage;
-  const end = start + perPage;
+        const question = block.split('<variant>')[0]
+            .replace('<img>', '')
+            .trim();
 
-  const page = allQuestions.slice(start, end);
+        const imgMatch = block.match(/<img>(.*?)\n/);
+        const image = imgMatch ? imgMatch[1].trim() : null;
 
-  page.forEach((q, i) => {
+        const variants = [...block.matchAll(/<variant>(.*)/g)]
+            .map(m => m[1].trim());
 
-    const index = start + i;
-
-    const div = document.createElement("div");
-    div.className = "question";
-
-    const p = document.createElement("p");
-    p.textContent = (index + 1) + ". " + q.question;
-
-    div.appendChild(p);
-
-    const correct = q.correct;
-
-    q.variants.forEach(v => {
-      const label = document.createElement("label");
-      label.className = "variant";
-
-      const input = document.createElement("input");
-      input.type = "radio";
-      input.name = "q" + index;
-      input.value = v;
-
-      input.onchange = () => {
-        if (v === correct) {
-          label.classList.add("correct-answer");
-        } else {
-          label.classList.add("wrong-answer");
-        }
-      };
-
-      label.appendChild(input);
-      label.appendChild(document.createTextNode(" " + v));
-      div.appendChild(label);
+        return { question, image, variants };
     });
-
-    quiz.appendChild(div);
-  });
 }
 
-/* ================= UTIL ================= */
-window.resetAll = () => location.reload();
+/* RENDER */
 
-window.shuffleQuestions = () => {
-  allQuestions.sort(() => Math.random() - 0.5);
-  render();
+function getSource() {
+    return activeQuestions.length ? activeQuestions : allQuestions;
+}
+
+function renderPage(page) {
+    const source = getSource();
+
+    const start = (page - 1) * questionsPerPage;
+    const end = page * questionsPerPage;
+
+    const pageQuestions = source.slice(start, end);
+    renderCustomQuestions(pageQuestions, start);
+}
+
+function renderCustomQuestions(questionsArray, globalStartIndex = 0) {
+
+    const quiz = document.getElementById('quiz');
+    quiz.innerHTML = '';
+
+    questionsArray.forEach((q, index) => {
+
+        const correctValues = [q.correct];
+        const shuffled = shuffle([...q.variants]);
+
+        const qIndex = globalStartIndex + index;
+
+        const div = document.createElement('div');
+        div.className = 'question';
+
+        const p = document.createElement('p');
+        p.textContent = (qIndex + 1) + '. ' + q.question;
+
+        div.appendChild(p);
+
+        if (q.image) {
+            const img = document.createElement('img');
+            img.src = q.image;
+            div.appendChild(img);
+        }
+
+        const result = document.createElement('div');
+        result.id = 'result' + qIndex;
+
+        shuffled.forEach((v) => {
+
+            const label = document.createElement('label');
+            label.className = 'variant';
+
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = 'q' + qIndex;
+            input.value = v;
+
+            input.addEventListener('change', () => {
+
+                document.querySelectorAll(`input[name="q${qIndex}"]`)
+                    .forEach(el => el.parentElement.style.fontWeight = 'normal');
+
+                label.style.fontWeight = 'bold';
+
+                const selected = document.querySelector(`input[name="q${qIndex}"]:checked`).value;
+                checkAnswer(qIndex, [selected], correctValues);
+            });
+
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(' ' + v));
+
+            div.appendChild(label);
+        });
+
+        div.appendChild(result);
+        quiz.appendChild(div);
+    });
+}
+
+/* LOGIC */
+
+function checkAnswer(qIndex, selectedValues, correctValues) {
+
+    const result = document.getElementById('result' + qIndex);
+
+    // все варианты
+    const inputs = document.querySelectorAll(`input[name="q${qIndex}"]`);
+
+    inputs.forEach(input => {
+        const label = input.parentElement;
+
+        // сброс цветов
+        label.classList.remove('correct-answer', 'wrong-answer');
+
+        if (correctValues.includes(input.value)) {
+            label.classList.add('correct-answer');
+        }
+
+        if (input.checked && !correctValues.includes(input.value)) {
+            label.classList.add('wrong-answer');
+        }
+    });
+
+    const isCorrect =
+        selectedValues.length === correctValues.length &&
+        selectedValues.every(v => correctValues.includes(v));
+
+    if (isCorrect) {
+        result.textContent = 'Дұрыс ✅';
+        result.className = 'correct';
+    } else {
+        result.innerHTML = `Қате ❌<br>Дұрыс жауап: <b>${correctValues[0]}</b>`;
+        result.className = 'incorrect';
+    }
+}
+    
+/* SHOW ANSWERS */
+    
+function showAllAnswers() {
+    const source = getSource();
+
+    source.forEach((q, i) => {
+        const correct = q.variants[0]; // правильный ответ
+
+        const inputs = document.querySelectorAll(`input[name="q${i}"]`);
+
+        inputs.forEach(input => {
+            const label = input.parentElement;
+
+            // очистка старых классов
+            label.classList.remove('correct-answer');
+
+            // если это правильный ответ → зелёный
+            if (input.value === correct) {
+                label.classList.add('correct-answer');
+            }
+        });
+
+        const result = document.getElementById('result' + i);
+        if (result) {
+            result.innerHTML = `Дұрыс жауап: <b>${correct}</b>`;
+            result.className = 'correct';
+        }
+    });
+}
+    
+/* UTILS */
+
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function shuffleQuestions() {
+    allQuestions = shuffle([...allQuestions]);
+    currentPage = 1;
+    renderPage(currentPage);
+    renderPagination();
+}
+
+function shuffleCurrentPage() {
+    const source = getSource();
+
+    const start = (currentPage - 1) * questionsPerPage;
+    const end = currentPage * questionsPerPage;
+
+    const part = source.slice(start, end);
+    const shuffledPart = shuffle([...part]);
+
+    source.splice(start, part.length, ...shuffledPart);
+
+    renderPage(currentPage);
+}
+
+/* PAGINATION */
+
+function renderPagination() {
+    const div = document.getElementById('pagination');
+    div.innerHTML = '';
+
+    const source = getSource();
+    const pages = Math.ceil(source.length / questionsPerPage);
+
+    for (let i = 1; i <= pages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+
+        if (i === currentPage) btn.classList.add('active');
+
+        btn.onclick = () => {
+            currentPage = i;
+            renderPage(i);
+            renderPagination();
+        };
+
+        div.appendChild(btn);
+    }
+}
+
+/* CUSTOM RANGE */
+
+function applyCustomSelection() {
+
+    const count = parseInt(document.getElementById('questionCount').value);
+    const start = parseInt(document.getElementById('rangeStart').value);
+    const end = parseInt(document.getElementById('rangeEnd').value);
+
+    if (start < 0 || end > allQuestions.length || start >= end) {
+        alert("Қате диапазон");
+        return;
+    }
+
+    let rangeQuestions = allQuestions.slice(start, end);
+    rangeQuestions = shuffle([...rangeQuestions]);
+
+    activeQuestions = rangeQuestions.slice(0, count);
+
+    currentPage = 1;
+    renderPage(currentPage);
+    renderPagination();
+}
+
+/* RESET */
+
+function resetAll() {
+    activeQuestions = [];
+    currentPage = 1;
+    renderPage(currentPage);
+    renderPagination();
+}
+
+/* ZOOM */
+function zoomIn() {
+    zoomLevel += 0.2;
+    if (zoomLevel > 2.0) zoomLevel = 1;
+    document.body.style.zoom = zoomLevel;
+}
+    
+window.addEventListener("wheel", function (e) {
+    if (e.ctrlKey) {
+        e.preventDefault();
+
+        if (e.deltaY < 0) {
+            zoomLevel += 0.1;
+        } else {
+            zoomLevel -= 0.1;
+        }
+
+        zoomLevel = Math.min(2, Math.max(0.5, zoomLevel));
+
+        document.body.style.zoom = zoomLevel;
+    }
+}, { passive: false });
+
+window.zoomIn = zoomIn;
+window.shuffleQuestions = shuffleQuestions;
+window.shuffleCurrentPage = shuffleCurrentPage;
+window.resetAll = resetAll;
+window.showAllAnswers = showAllAnswers;
+window.applyCustomSelection = applyCustomSelection;
+        
+/* SCROLL */
+
+document.getElementById("scrollTopBtn").onclick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-window.showAllAnswers = () => {
-  document.querySelectorAll(".variant").forEach(el => {
-    el.style.fontWeight = "bold";
-  });
+document.getElementById("scrollBottomBtn").onclick = () => {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 };
 
-window.zoomIn = () => {
-  document.body.style.zoom =
-    (document.body.style.zoom ? parseFloat(document.body.style.zoom) : 1) + 0.1;
-};
+loadTest();
 
-document.getElementById("scrollTopBtn").onclick = () =>
-  window.scrollTo({ top: 0, behavior: "smooth" });
-
-document.getElementById("scrollBottomBtn").onclick = () =>
-  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-
+    
 </script>
 
 </body>

@@ -305,8 +305,6 @@ let activeQuestions = [];
 
 /* LOAD */
 
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
 async function loadTest() {
     const querySnapshot = await getDocs(collection(db, "tests"));
 

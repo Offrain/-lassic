@@ -552,17 +552,14 @@ function showAllAnswers() {
     const source = getSource();
 
     source.forEach((q, i) => {
-        const correct = q.variants[0]; // правильный ответ
+        const correct = Array.isArray(q.correct) ? q.correct[0] : q.correct;
 
         const inputs = document.querySelectorAll(`input[name="q${i}"]`);
 
         inputs.forEach(input => {
             const label = input.parentElement;
-
-            // очистка старых классов
             label.classList.remove('correct-answer');
 
-            // если это правильный ответ → зелёный
             if (input.value === correct) {
                 label.classList.add('correct-answer');
             }
@@ -575,7 +572,6 @@ function showAllAnswers() {
         }
     });
 }
-    
 /* UTILS */
 
 function shuffle(arr) {

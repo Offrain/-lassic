@@ -450,7 +450,7 @@ function renderCustomQuestions(questionsArray, globalStartIndex = 0) {
     quiz.innerHTML = '';
 
     questionsArray.forEach((q, index) => {
-        const correctValues = [q.correct];
+        const correctValues = q.correct;
         const shuffled = shuffle([...q.variants]);
 
         const qIndex = globalStartIndex + index;

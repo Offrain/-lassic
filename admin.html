@@ -9,6 +9,7 @@
 
 <h2>📦 Admin Panel</h2>
 
+<!-- ADD -->
 <input id="question" placeholder="Сұрақ"><br><br>
 
 <input id="v1" placeholder="Вариант 1"><br>
@@ -17,18 +18,18 @@
 <input id="v4" placeholder="Вариант 4"><br>
 <input id="v5" placeholder="Вариант 5"><br><br>
 
-<input id="correct" placeholder="Правильный ответ"><br><br>
-
 <button onclick="addQuestion()">➕ Добавить</button>
 
 <hr>
 
+<!-- IMPORT -->
 <h3>📥 JSON импорт</h3>
 <textarea id="json" rows="6" cols="50"></textarea><br>
 <button onclick="importJSON()">Импортировать</button>
 
 <hr>
 
+<!-- SEARCH -->
 <h3>🔍 Поиск</h3>
 <input id="search" placeholder="Поиск..." oninput="loadQuestions()">
 
@@ -37,6 +38,7 @@
 
 <hr>
 
+<!-- EDIT -->
 <h3>✏️ Редактирование</h3>
 
 <div id="editBox" style="display:none; border:1px solid #000; padding:10px;">
@@ -49,7 +51,13 @@
   <input id="e_v4" placeholder="Вариант 4"><br>
   <input id="e_v5" placeholder="Вариант 5"><br><br>
 
-  <input id="e_correct" placeholder="Правильный ответ"><br><br>
+  <b>Правильный ответ:</b><br><br>
+
+  <label><input type="radio" name="correctEdit" id="r1"> Вариант 1</label><br>
+  <label><input type="radio" name="correctEdit" id="r2"> Вариант 2</label><br>
+  <label><input type="radio" name="correctEdit" id="r3"> Вариант 3</label><br>
+  <label><input type="radio" name="correctEdit" id="r4"> Вариант 4</label><br>
+  <label><input type="radio" name="correctEdit" id="r5"> Вариант 5</label><br><br>
 
   <button onclick="saveEdit()">💾 Сохранить</button>
   <button onclick="closeEdit()">❌ Отмена</button>
@@ -119,28 +127,22 @@ onAuthStateChanged(auth, async (user) => {
   loadQuestions();
 });
 
-/* ADD */
+/* ADD QUESTION */
 window.addQuestion = async function () {
 
   const q = question.value;
 
   const variants = [v1.value, v2.value, v3.value, v4.value, v5.value].filter(v => v);
-  const correct = document.getElementById("correct").value;
 
-  if (!q || !correct || variants.length < 2) {
-    setMsg("❌ Заполни всё");
-    return;
-  }
-
-  if (!variants.includes(correct)) {
-    setMsg("❌ Правильный ответ должен быть в вариантах");
+  if (!q || variants.length < 2) {
+    setMsg("❌ Заполни вопрос и минимум 2 варианта");
     return;
   }
 
   await addDoc(collection(db, "tests"), {
     question: q,
     variants,
-    correct
+    correct: variants[0] // по умолчанию первый
   });
 
   setMsg("✅ Добавлено");
@@ -155,7 +157,6 @@ window.importJSON = async function () {
 
     for (let q of data) {
       if (!q.question || !q.variants || !q.correct) continue;
-
       await addDoc(collection(db, "tests"), q);
     }
 
@@ -217,18 +218,23 @@ window.deleteQuestion = async function (id) {
 window.openEdit = function (id, data) {
 
   currentEditId = id;
-
   editBox.style.display = "block";
 
   e_question.value = data.question;
 
-  e_v1.value = data.variants[0] || "";
-  e_v2.value = data.variants[1] || "";
-  e_v3.value = data.variants[2] || "";
-  e_v4.value = data.variants[3] || "";
-  e_v5.value = data.variants[4] || "";
+  const inputs = [e_v1, e_v2, e_v3, e_v4, e_v5];
 
-  e_correct.value = data.correct;
+  inputs.forEach((inp, i) => {
+    inp.value = data.variants[i] || "";
+  });
+
+  const radios = [r1, r2, r3, r4, r5];
+  radios.forEach(r => r.checked = false);
+
+  const index = data.variants.indexOf(data.correct);
+  if (index !== -1 && radios[index]) {
+    radios[index].checked = true;
+  }
 };
 
 /* SAVE EDIT */
@@ -236,16 +242,19 @@ window.saveEdit = async function () {
 
   const question = e_question.value;
 
-  const variants = [e_v1.value, e_v2.value, e_v3.value, e_v4.value, e_v5.value].filter(v => v);
-  const correct = e_correct.value;
+  const variants = [e_v1.value, e_v2.value, e_v3.value, e_v4.value, e_v5.value]
+    .filter(v => v);
+
+  const radios = [r1, r2, r3, r4, r5];
+
+  let correct = null;
+
+  radios.forEach((r, i) => {
+    if (r.checked) correct = variants[i];
+  });
 
   if (!question || !correct || variants.length < 2) {
     setMsg("❌ Заполни всё");
-    return;
-  }
-
-  if (!variants.includes(correct)) {
-    setMsg("❌ Правильный ответ должен быть в вариантах");
     return;
   }
 

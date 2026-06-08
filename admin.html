@@ -7,7 +7,7 @@
 
 <body>
 
-<h2>📦 Admin Panel - Тест загрузка</h2>
+<h2>📦 Admin Panel</h2>
 
 <input id="question" placeholder="Сұрақ"><br><br>
 
@@ -24,21 +24,32 @@
 <hr>
 
 <h3>📥 JSON импорт</h3>
-<textarea id="json" rows="10" cols="50" placeholder='[{"question":"2+2?","variants":["3","4"],"correct":"4"}]'></textarea><br>
-
+<textarea id="json" rows="6" cols="50"></textarea><br>
 <button onclick="importJSON()">Импортировать</button>
+
+<hr>
+
+<h3>🔍 Поиск</h3>
+<input id="search" placeholder="Поиск..." oninput="loadQuestions()">
+
+<h3>📋 Вопросы</h3>
+<div id="list"></div>
 
 <p id="msg"></p>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
 import {
   getFirestore,
   collection,
   addDoc,
   doc,
-  getDoc
+  getDoc,
+  getDocs,
+  deleteDoc,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import {
@@ -46,7 +57,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-/* ================= CONFIG ================= */
+/* CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyCAL20P_NiAsJ54BHTW81FZba0FYNOc6SU",
   authDomain: "prst-99760.firebaseapp.com",
@@ -57,12 +68,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* ================= UI ================= */
+/* UI */
 function setMsg(t) {
   document.getElementById("msg").innerText = t;
 }
 
-/* ================= ADMIN CHECK ================= */
+/* ADMIN CHECK */
 onAuthStateChanged(auth, async (user) => {
 
   if (!user) {
@@ -81,98 +92,126 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   setMsg("✅ Admin доступ открыт");
+  loadQuestions();
 });
 
-/* ================= ADD QUESTION ================= */
+/* ADD */
 window.addQuestion = async function () {
 
-  try {
+  const q = document.getElementById("question").value;
 
-    const q = document.getElementById("question").value;
+  const variants = [
+    v1.value, v2.value, v3.value, v4.value, v5.value
+  ].filter(v => v);
 
-    const variants = [
-      document.getElementById("v1").value,
-      document.getElementById("v2").value,
-      document.getElementById("v3").value,
-      document.getElementById("v4").value,
-      document.getElementById("v5").value
-    ].filter(v => v);
+  const correct = document.getElementById("correct").value;
 
-    const correct = document.getElementById("correct").value;
-
-    if (!q || !correct || variants.length < 2) {
-      setMsg("❌ Заполни вопрос и минимум 2 варианта");
-      return;
-    }
-
-    if (!variants.includes(correct)) {
-      setMsg("❌ Правильный ответ должен быть в вариантах");
-      return;
-    }
-
-    await addDoc(collection(db, "tests"), {
-      question: q,
-      variants,
-      correct
-    });
-
-    setMsg("✅ Добавлено!");
-
-  } catch (e) {
-    console.error(e);
-    setMsg("❌ Ошибка: " + e.message);
+  if (!q || !correct || variants.length < 2) {
+    setMsg("❌ Заполни всё");
+    return;
   }
+
+  if (!variants.includes(correct)) {
+    setMsg("❌ Ответ должен быть в вариантах");
+    return;
+  }
+
+  await addDoc(collection(db, "tests"), {
+    question: q,
+    variants,
+    correct
+  });
+
+  setMsg("✅ Добавлено");
+  loadQuestions();
 };
 
-/* ================= IMPORT JSON (FIXED) ================= */
+/* IMPORT JSON */
 window.importJSON = async function () {
 
   try {
-
-    const raw = document.getElementById("json").value.trim();
-
-    if (!raw) {
-      setMsg("❌ JSON пустой");
-      return;
-    }
-
-    console.log("RAW JSON:", raw);
-
-    let data;
-
-    try {
-      data = JSON.parse(raw);
-    } catch (e) {
-      console.error("JSON PARSE ERROR:", e);
-      setMsg("❌ JSON ошибка: " + e.message);
-      return;
-    }
-
-    if (!Array.isArray(data)) {
-      setMsg("❌ JSON должен быть массивом []");
-      return;
-    }
+    const data = JSON.parse(json.value);
 
     for (let q of data) {
+      if (!q.question || !q.variants || !q.correct) continue;
 
-      if (!q.question || !q.variants || !q.correct) {
-        console.log("SKIP INVALID:", q);
-        continue;
-      }
-
-      await addDoc(collection(db, "tests"), {
-        question: q.question,
-        variants: q.variants,
-        correct: q.correct
-      });
+      await addDoc(collection(db, "tests"), q);
     }
 
-    setMsg("📦 Импорт завершён!");
+    setMsg("📦 Импорт завершён");
+    loadQuestions();
 
   } catch (e) {
-    console.error(e);
-    setMsg("❌ Ошибка: " + e.message);
+    setMsg("❌ Ошибка JSON");
   }
+};
+
+/* LOAD + SEARCH */
+window.loadQuestions = async function () {
+
+  const list = document.getElementById("list");
+  const search = document.getElementById("search").value.toLowerCase();
+
+  list.innerHTML = "⏳ Загрузка...";
+
+  const snap = await getDocs(collection(db, "tests"));
+
+  list.innerHTML = "";
+
+  snap.forEach(docSnap => {
+
+    const data = docSnap.data();
+
+    if (search && !data.question.toLowerCase().includes(search)) return;
+
+    const div = document.createElement("div");
+
+    div.style.border = "1px solid #ccc";
+    div.style.margin = "10px 0";
+    div.style.padding = "10px";
+
+    div.innerHTML = `
+      <b>${data.question}</b><br>
+      ${data.variants.join(", ")}<br>
+      ✅ ${data.correct}<br><br>
+
+      <button onclick="editQuestion('${docSnap.id}', \`${data.question}\`, \`${data.correct}\`)">✏️</button>
+      <button onclick="deleteQuestion('${docSnap.id}')">🗑</button>
+    `;
+
+    list.appendChild(div);
+  });
+
+  if (!list.innerHTML) list.innerHTML = "❌ Ничего не найдено";
+};
+
+/* DELETE */
+window.deleteQuestion = async function (id) {
+
+  if (!confirm("Удалить?")) return;
+
+  await deleteDoc(doc(db, "tests", id));
+
+  setMsg("🗑 Удалено");
+  loadQuestions();
+};
+
+/* EDIT */
+window.editQuestion = async function (id, oldQ, oldCorrect) {
+
+  const newQ = prompt("Вопрос:", oldQ);
+  if (!newQ) return;
+
+  const newCorrect = prompt("Правильный:", oldCorrect);
+  if (!newCorrect) return;
+
+  await updateDoc(doc(db, "tests", id), {
+    question: newQ,
+    correct: newCorrect
+  });
+
+  setMsg("✏️ Обновлено");
+  loadQuestions();
 };
 
 </script>

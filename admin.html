@@ -15,7 +15,7 @@
 <input id="v2" placeholder="Вариант 2"><br>
 <input id="v3" placeholder="Вариант 3"><br>
 <input id="v4" placeholder="Вариант 4"><br>
-<input id="v5" placeholder="Вариант 5 (опционально)"><br><br>
+<input id="v5" placeholder="Вариант 5"><br><br>
 
 <input id="correct" placeholder="Правильный ответ"><br><br>
 
@@ -34,6 +34,27 @@
 
 <h3>📋 Вопросы</h3>
 <div id="list"></div>
+
+<hr>
+
+<h3>✏️ Редактирование</h3>
+
+<div id="editBox" style="display:none; border:1px solid #000; padding:10px;">
+
+  <input id="e_question" placeholder="Вопрос"><br><br>
+
+  <input id="e_v1" placeholder="Вариант 1"><br>
+  <input id="e_v2" placeholder="Вариант 2"><br>
+  <input id="e_v3" placeholder="Вариант 3"><br>
+  <input id="e_v4" placeholder="Вариант 4"><br>
+  <input id="e_v5" placeholder="Вариант 5"><br><br>
+
+  <input id="e_correct" placeholder="Правильный ответ"><br><br>
+
+  <button onclick="saveEdit()">💾 Сохранить</button>
+  <button onclick="closeEdit()">❌ Отмена</button>
+
+</div>
 
 <p id="msg"></p>
 
@@ -68,7 +89,10 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* UI */
+/* STATE */
+let currentEditId = null;
+
+/* MSG */
 function setMsg(t) {
   document.getElementById("msg").innerText = t;
 }
@@ -98,12 +122,9 @@ onAuthStateChanged(auth, async (user) => {
 /* ADD */
 window.addQuestion = async function () {
 
-  const q = document.getElementById("question").value;
+  const q = question.value;
 
-  const variants = [
-    v1.value, v2.value, v3.value, v4.value, v5.value
-  ].filter(v => v);
-
+  const variants = [v1.value, v2.value, v3.value, v4.value, v5.value].filter(v => v);
   const correct = document.getElementById("correct").value;
 
   if (!q || !correct || variants.length < 2) {
@@ -112,7 +133,7 @@ window.addQuestion = async function () {
   }
 
   if (!variants.includes(correct)) {
-    setMsg("❌ Ответ должен быть в вариантах");
+    setMsg("❌ Правильный ответ должен быть в вариантах");
     return;
   }
 
@@ -126,7 +147,7 @@ window.addQuestion = async function () {
   loadQuestions();
 };
 
-/* IMPORT JSON */
+/* IMPORT */
 window.importJSON = async function () {
 
   try {
@@ -142,7 +163,7 @@ window.importJSON = async function () {
     loadQuestions();
 
   } catch (e) {
-    setMsg("❌ Ошибка JSON");
+    setMsg("❌ JSON ошибка");
   }
 };
 
@@ -151,8 +172,6 @@ window.loadQuestions = async function () {
 
   const list = document.getElementById("list");
   const search = document.getElementById("search").value.toLowerCase();
-
-  list.innerHTML = "⏳ Загрузка...";
 
   const snap = await getDocs(collection(db, "tests"));
 
@@ -167,22 +186,20 @@ window.loadQuestions = async function () {
     const div = document.createElement("div");
 
     div.style.border = "1px solid #ccc";
-    div.style.margin = "10px 0";
     div.style.padding = "10px";
+    div.style.margin = "10px 0";
 
     div.innerHTML = `
       <b>${data.question}</b><br>
       ${data.variants.join(", ")}<br>
       ✅ ${data.correct}<br><br>
 
-      <button onclick="editQuestion('${docSnap.id}', \`${data.question}\`, \`${data.correct}\`)">✏️</button>
+      <button onclick='openEdit(${JSON.stringify(docSnap.id)}, ${JSON.stringify(data)})'>✏️</button>
       <button onclick="deleteQuestion('${docSnap.id}')">🗑</button>
     `;
 
     list.appendChild(div);
   });
-
-  if (!list.innerHTML) list.innerHTML = "❌ Ничего не найдено";
 };
 
 /* DELETE */
@@ -196,22 +213,58 @@ window.deleteQuestion = async function (id) {
   loadQuestions();
 };
 
-/* EDIT */
-window.editQuestion = async function (id, oldQ, oldCorrect) {
+/* OPEN EDIT */
+window.openEdit = function (id, data) {
 
-  const newQ = prompt("Вопрос:", oldQ);
-  if (!newQ) return;
+  currentEditId = id;
 
-  const newCorrect = prompt("Правильный:", oldCorrect);
-  if (!newCorrect) return;
+  editBox.style.display = "block";
 
-  await updateDoc(doc(db, "tests", id), {
-    question: newQ,
-    correct: newCorrect
+  e_question.value = data.question;
+
+  e_v1.value = data.variants[0] || "";
+  e_v2.value = data.variants[1] || "";
+  e_v3.value = data.variants[2] || "";
+  e_v4.value = data.variants[3] || "";
+  e_v5.value = data.variants[4] || "";
+
+  e_correct.value = data.correct;
+};
+
+/* SAVE EDIT */
+window.saveEdit = async function () {
+
+  const question = e_question.value;
+
+  const variants = [e_v1.value, e_v2.value, e_v3.value, e_v4.value, e_v5.value].filter(v => v);
+  const correct = e_correct.value;
+
+  if (!question || !correct || variants.length < 2) {
+    setMsg("❌ Заполни всё");
+    return;
+  }
+
+  if (!variants.includes(correct)) {
+    setMsg("❌ Правильный ответ должен быть в вариантах");
+    return;
+  }
+
+  await updateDoc(doc(db, "tests", currentEditId), {
+    question,
+    variants,
+    correct
   });
 
-  setMsg("✏️ Обновлено");
+  setMsg("✅ Обновлено");
+
+  closeEdit();
   loadQuestions();
+};
+
+/* CLOSE EDIT */
+window.closeEdit = function () {
+  editBox.style.display = "none";
+  currentEditId = null;
 };
 
 </script>

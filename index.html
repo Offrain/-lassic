@@ -510,38 +510,40 @@ function renderCustomQuestions(questionsArray, globalStartIndex = 0) {
 }
 
 /* LOGIC */
-
+    
 function checkAnswer(qIndex, selectedValues, correctValues) {
+
+    const correctArr = Array.isArray(correctValues)
+        ? correctValues
+        : [correctValues];
 
     const result = document.getElementById('result' + qIndex);
 
-    // все варианты
     const inputs = document.querySelectorAll(`input[name="q${qIndex}"]`);
 
     inputs.forEach(input => {
         const label = input.parentElement;
 
-        // сброс цветов
         label.classList.remove('correct-answer', 'wrong-answer');
 
-        if (correctValues.includes(input.value)) {
+        if (correctArr.includes(input.value)) {
             label.classList.add('correct-answer');
         }
 
-        if (input.checked && !correctValues.includes(input.value)) {
+        if (input.checked && !correctArr.includes(input.value)) {
             label.classList.add('wrong-answer');
         }
     });
 
     const isCorrect =
-        selectedValues.length === correctValues.length &&
-        selectedValues.every(v => correctValues.includes(v));
+        selectedValues.length === correctArr.length &&
+        selectedValues.every(v => correctArr.includes(v));
 
     if (isCorrect) {
         result.textContent = 'Дұрыс ✅';
         result.className = 'correct';
     } else {
-        result.innerHTML = `Қате ❌<br>Дұрыс жауап: <b>${correctValues[0]}</b>`;
+        result.innerHTML = `Қате ❌<br>Дұрыс жауап: <b>${correctArr[0]}</b>`;
         result.className = 'incorrect';
     }
 }

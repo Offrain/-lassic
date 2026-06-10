@@ -47,12 +47,34 @@ img {
     color: green;
     font-weight: bold;
 }
-
+    
+/* dark mode */
 .wrong-answer {
     color: red;
     font-weight: bold;
 }
 
+body.dark {
+    background: #121212;
+    color: #eee;
+}
+
+body.dark .question {
+    background: #1e1e1e;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+body.dark button {
+    background: #333;
+    color: white;
+    border: none;
+}
+
+body.dark .variant {
+    color: #ddd;
+}
+    
 /* scroll buttons */
 #scrollTopBtn, #scrollBottomBtn {
     position: fixed;
@@ -145,7 +167,7 @@ img {
 <h1>Тест</h1>
 
 <button onclick="zoomIn()">  🔍  </button>
-
+<button onclick="toggleTheme()">🌙 Тема</button>
 <button onclick="shuffleQuestions()">Араластыр (барлығы)</button> <button onclick="shuffleCurrentPage()">Араластыр (бет)</button> <button onclick="resetAll()">Қайта бастау</button> <button onclick="showAllAnswers()">Жауап көрсету</button>
 
 <br><br>
@@ -661,7 +683,24 @@ function resetAll() {
     renderPage(currentPage);
     renderPagination();
 }
+    
+/* DARK MODE */
+    function toggleTheme() {
+    document.body.classList.toggle('dark');
 
+    const isDark = document.body.classList.contains('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+
+window.onload = () => {
+    loadTest();
+
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+    }
+};
+
+    
 /* ZOOM */
 function zoomIn() {
     zoomLevel += 0.2;

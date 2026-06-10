@@ -571,7 +571,7 @@ function checkAnswer(qIndex, selectedValues, correctValues) {
         result.textContent = 'Дұрыс ✅';
         result.className = 'correct';
     } else {
-        result.innerHTML = `Қате ❌<br>Дұрыс жауап: <b>${correctArr[0]}</b>`;
+        result.textContent = 'Қате ❌';
         result.className = 'incorrect';
     }
 }

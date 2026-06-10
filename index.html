@@ -594,6 +594,12 @@ function showAllAnswers() {
                 label.classList.add('correct-answer');
             }
         });
+  const result = document.getElementById('result' + i);
+        if (result) {
+            result.innerHTML = `Дұрыс жауап: <b>${correct}</b>`;
+            result.className = 'correct';
+        }
+    });
 }
       
 /* UTILS */

@@ -195,20 +195,29 @@ window.importJSON = async function () {
 window.loadQuestions = async function () {
 
   const list = document.getElementById("list");
-  const search = document.getElementById("search").value.toLowerCase();
+  const search = document.getElementById("search").value.trim().toLowerCase();
+
+  list.innerHTML = "";
+
+  // если поиск пустой — ничего не показываем
+  if (!search) {
+    list.innerHTML = "<i>Введите запрос для поиска...</i>";
+    return;
+  }
 
   const snap = await getDocs(collection(db, "tests"));
 
-  list.innerHTML = "";
+  let found = false;
 
   snap.forEach(docSnap => {
 
     const data = docSnap.data();
 
-    if (search && !data.question.toLowerCase().includes(search)) return;
+    if (!data.question.toLowerCase().includes(search)) return;
+
+    found = true;
 
     const id = docSnap.id;
-
     const variants = data.variants || [];
 
     list.innerHTML += `
@@ -248,6 +257,10 @@ window.loadQuestions = async function () {
       </div>
     `;
   });
+
+  if (!found) {
+    list.innerHTML = "<i>Ничего не найдено</i>";
+  }
 };
 
 /* TOGGLE EDIT */

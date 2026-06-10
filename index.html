@@ -588,17 +588,15 @@ function showAllAnswers() {
 
         inputs.forEach(input => {
             const label = input.parentElement;
+
+            // убираем старую подсветку (если есть)
             label.classList.remove('correct-answer');
 
+            // подсвечиваем только правильный ответ
             if (input.value === correct) {
                 label.classList.add('correct-answer');
             }
         });
-  const result = document.getElementById('result' + i);
-        if (result) {
-            result.innerHTML = `Дұрыс жауап: <b>${correct}</b>`;
-            result.className = 'correct';
-        }
     });
 }
       

@@ -107,8 +107,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-let currentEditId = null;
-
 /* MSG */
 function setMsg(t) {
   document.getElementById("msg").innerText = t;
@@ -143,13 +141,7 @@ window.addQuestion = async function () {
 
   const variants = [v1.value, v2.value, v3.value, v4.value, v5.value].filter(v => v);
 
-  const radios = [
-    document.getElementById("a1"),
-    document.getElementById("a2"),
-    document.getElementById("a3"),
-    document.getElementById("a4"),
-    document.getElementById("a5")
-  ];
+  const radios = [a1, a2, a3, a4, a5];
 
   let correct = null;
 
@@ -199,7 +191,7 @@ window.importJSON = async function () {
   }
 };
 
-/* LOAD */
+/* LOAD QUESTIONS (INLINE EDIT) */
 window.loadQuestions = async function () {
 
   const list = document.getElementById("list");
@@ -222,16 +214,66 @@ window.loadQuestions = async function () {
     div.style.margin = "10px 0";
 
     div.innerHTML = `
-      <b>${data.question}</b><br>
-      ${data.variants.join(", ")}<br>
-      ✅ ${data.correct}<br><br>
+      <div>
+        <b>${data.question}</b><br>
+        ${data.variants.join(", ")}<br>
+        ✅ ${data.correct}<br><br>
 
-      <button onclick='openEdit(${JSON.stringify(docSnap.id)}, ${JSON.stringify(data)})'>✏️</button>
-      <button onclick="deleteQuestion('${docSnap.id}')">🗑</button>
+        <button onclick="toggleEdit('${docSnap.id}')">✏️ Edit</button>
+        <button onclick="deleteQuestion('${docSnap.id}')">🗑 Delete</button>
+      </div>
+
+      <div id="edit-${docSnap.id}" style="display:none; margin-top:10px; border-top:1px solid #999; padding-top:10px;">
+        
+        <input id="q-${docSnap.id}" value="${data.question}"><br><br>
+
+        <input id="v1-${docSnap.id}" value="${data.variants[0] || ""}"><br>
+        <input id="v2-${docSnap.id}" value="${data.variants[1] || ""}"><br>
+        <input id="v3-${docSnap.id}" value="${data.variants[2] || ""}"><br>
+        <input id="v4-${docSnap.id}" value="${data.variants[3] || ""}"><br>
+        <input id="v5-${docSnap.id}" value="${data.variants[4] || ""}"><br><br>
+
+        <button onclick="saveInlineEdit('${docSnap.id}')">💾 Save</button>
+        <button onclick="toggleEdit('${docSnap.id}')">❌ Cancel</button>
+      </div>
     `;
 
     list.appendChild(div);
   });
+};
+
+/* TOGGLE EDIT */
+window.toggleEdit = function(id) {
+  const box = document.getElementById(`edit-${id}`);
+  box.style.display = box.style.display === "none" ? "block" : "none";
+};
+
+/* SAVE INLINE EDIT */
+window.saveInlineEdit = async function(id) {
+
+  const question = document.getElementById(`q-${id}`).value;
+
+  const variants = [
+    document.getElementById(`v1-${id}`).value,
+    document.getElementById(`v2-${id}`).value,
+    document.getElementById(`v3-${id}`).value,
+    document.getElementById(`v4-${id}`).value,
+    document.getElementById(`v5-${id}`).value
+  ].filter(v => v);
+
+  if (!question || variants.length < 2) {
+    setMsg("❌ Заполни данные");
+    return;
+  }
+
+  await updateDoc(doc(db, "tests", id), {
+    question,
+    variants,
+    correct: variants[0] // можно улучшить позже (radio)
+  });
+
+  setMsg("✅ Обновлено");
+  loadQuestions();
 };
 
 /* DELETE */
@@ -243,65 +285,6 @@ window.deleteQuestion = async function (id) {
 
   setMsg("🗑 Удалено");
   loadQuestions();
-};
-
-/* OPEN EDIT */
-window.openEdit = function (id, data) {
-
-  currentEditId = id;
-  editBox.style.display = "block";
-
-  e_question.value = data.question;
-
-  const inputs = [e_v1, e_v2, e_v3, e_v4, e_v5];
-  inputs.forEach((inp, i) => inp.value = data.variants[i] || "");
-
-  const radios = [r1, r2, r3, r4, r5];
-  radios.forEach(r => r.checked = false);
-
-  const index = data.variants.findIndex(v => v.trim() === data.correct.trim());
-
-  if (index !== -1 && radios[index]) {
-    radios[index].checked = true;
-  }
-};
-
-/* SAVE EDIT */
-window.saveEdit = async function () {
-
-  const question = e_question.value;
-
-  const variants = [e_v1.value, e_v2.value, e_v3.value, e_v4.value, e_v5.value].filter(v => v);
-
-  const radios = [r1, r2, r3, r4, r5];
-
-  let correct = null;
-
-  radios.forEach((r, i) => {
-    if (r.checked) correct = variants[i];
-  });
-
-  if (!question || variants.length < 2 || !correct) {
-    setMsg("❌ Заполни всё");
-    return;
-  }
-
-  await updateDoc(doc(db, "tests", currentEditId), {
-    question,
-    variants,
-    correct
-  });
-
-  setMsg("✅ Обновлено");
-
-  closeEdit();
-  loadQuestions();
-};
-
-/* CLOSE */
-window.closeEdit = function () {
-  editBox.style.display = "none";
-  currentEditId = null;
 };
 
 </script>
